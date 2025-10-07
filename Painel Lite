@@ -1,0 +1,183 @@
+--// PainelStudioLite v6.3 - Executor Universal
+--// Feito por DevLITE
+
+-- GUI principal
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "PainelStudioLite"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = game:GetService("CoreGui")
+
+-- Botão para abrir painel
+local OpenMain = Instance.new("TextButton")
+OpenMain.Size = UDim2.new(0, 120, 0, 40)
+OpenMain.Position = UDim2.new(0, 20, 0.8, 0)
+OpenMain.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+OpenMain.TextColor3 = Color3.fromRGB(255, 255, 255)
+OpenMain.Font = Enum.Font.SourceSansBold
+OpenMain.TextSize = 18
+OpenMain.Text = "Abrir Painel"
+OpenMain.Parent = ScreenGui
+OpenMain.Active = true
+OpenMain.Draggable = true
+
+-- Janela principal
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 500, 0, 400)
+MainFrame.Position = UDim2.new(0.5, -250, 0.5, -200)
+MainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+MainFrame.BorderSizePixel = 0
+MainFrame.Visible = false
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+
+-- Barra de título
+local TitleBar = Instance.new("Frame")
+TitleBar.Size = UDim2.new(1, 0, 0, 30)
+TitleBar.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+TitleBar.Parent = MainFrame
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, -90, 1, 0)
+Title.Position = UDim2.new(0, 10, 0, 0)
+Title.Text = "Painel Studio Lite v6.3 - Executor Universal"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Font = Enum.Font.SourceSansBold
+Title.TextSize = 18
+Title.Parent = TitleBar
+
+-- Botões de janela
+local CloseButton = Instance.new("TextButton")
+CloseButton.Size = UDim2.new(0, 30, 1, 0)
+CloseButton.Position = UDim2.new(1, -35, 0, 0)
+CloseButton.Text = "X"
+CloseButton.TextColor3 = Color3.fromRGB(255, 80, 80)
+CloseButton.BackgroundTransparency = 1
+CloseButton.TextSize = 20
+CloseButton.Parent = TitleBar
+
+local MinimizeButton = Instance.new("TextButton")
+MinimizeButton.Size = UDim2.new(0, 30, 1, 0)
+MinimizeButton.Position = UDim2.new(1, -70, 0, 0)
+MinimizeButton.Text = "-"
+MinimizeButton.TextColor3 = Color3.fromRGB(200, 200, 200)
+MinimizeButton.BackgroundTransparency = 1
+MinimizeButton.TextSize = 24
+MinimizeButton.Parent = TitleBar
+
+-- Caixa de texto (bloco de notas)
+local NoteBox = Instance.new("TextBox")
+NoteBox.Size = UDim2.new(1, -20, 1, -110)
+NoteBox.Position = UDim2.new(0, 10, 0, 40)
+NoteBox.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+NoteBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+NoteBox.TextSize = 16
+NoteBox.Font = Enum.Font.Code
+NoteBox.MultiLine = true
+NoteBox.ClearTextOnFocus = false
+NoteBox.TextXAlignment = Enum.TextXAlignment.Left
+NoteBox.TextYAlignment = Enum.TextYAlignment.Top
+NoteBox.PlaceholderText = "-- Escreva ou cole seu script aqui"
+NoteBox.Parent = MainFrame
+
+-- Botões
+local ExecuteButton = Instance.new("TextButton")
+ExecuteButton.Size = UDim2.new(0.3, -10, 0, 40)
+ExecuteButton.Position = UDim2.new(0, 10, 1, -50)
+ExecuteButton.BackgroundColor3 = Color3.fromRGB(60, 180, 75)
+ExecuteButton.Text = "Executar"
+ExecuteButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ExecuteButton.Font = Enum.Font.SourceSansBold
+ExecuteButton.TextSize = 18
+ExecuteButton.Parent = MainFrame
+
+local CopyButton = Instance.new("TextButton")
+CopyButton.Size = UDim2.new(0.3, -10, 0, 40)
+CopyButton.Position = UDim2.new(0.35, 0, 1, -50)
+CopyButton.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+CopyButton.Text = "Copiar"
+CopyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CopyButton.Font = Enum.Font.SourceSansBold
+CopyButton.TextSize = 18
+CopyButton.Parent = MainFrame
+
+local ClearButton = Instance.new("TextButton")
+ClearButton.Size = UDim2.new(0.3, -10, 0, 40)
+ClearButton.Position = UDim2.new(0.7, 0, 1, -50)
+ClearButton.BackgroundColor3 = Color3.fromRGB(200, 80, 80)
+ClearButton.Text = "Limpar"
+ClearButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ClearButton.Font = Enum.Font.SourceSansBold
+ClearButton.TextSize = 18
+ClearButton.Parent = MainFrame
+
+-- Funções principais
+OpenMain.MouseButton1Click:Connect(function()
+	MainFrame.Visible = not MainFrame.Visible
+	OpenMain.Text = MainFrame.Visible and "Fechar Painel" or "Abrir Painel"
+end)
+
+CloseButton.MouseButton1Click:Connect(function()
+	MainFrame.Visible = false
+	OpenMain.Text = "Abrir Painel"
+end)
+
+MinimizeButton.MouseButton1Click:Connect(function()
+	local visible = not NoteBox.Visible
+	NoteBox.Visible = visible
+	ExecuteButton.Visible = visible
+	CopyButton.Visible = visible
+	ClearButton.Visible = visible
+end)
+
+CopyButton.MouseButton1Click:Connect(function()
+	if setclipboard then
+		setclipboard(NoteBox.Text)
+	end
+end)
+
+ClearButton.MouseButton1Click:Connect(function()
+	NoteBox.Text = ""
+end)
+
+-- Executor Universal
+local function executarScript(code)
+	if code == nil or code == "" then
+		warn("Nenhum script para executar.")
+		return
+	end
+
+	-- 1️⃣ Tenta via loadstring (executores externos)
+	if loadstring then
+		local func, err = loadstring(code)
+		if func then
+			local ok, msg = pcall(func)
+			if not ok then
+				warn("Erro no script: " .. tostring(msg))
+			end
+			return
+		else
+			warn("Erro de sintaxe: " .. tostring(err))
+		end
+	end
+
+	-- 2️⃣ Alternativa para Roblox Studio Lite
+	local LocalPlayer = game:GetService("Players").LocalPlayer
+	local char = LocalPlayer and LocalPlayer.Character
+	if char then
+		local tempScript = Instance.new("LocalScript")
+		tempScript.Source = code
+		tempScript.Parent = char
+		wait(0.1)
+		tempScript:Destroy()
+	else
+		warn("Não foi possível executar o script (sem personagem encontrado).")
+	end
+end
+
+ExecuteButton.MouseButton1Click:Connect(function()
+	executarScript(NoteBox.Text)
+end)
+
+print("✅ PainelStudioLite v6.3 carregado e executor universal ativado.")
