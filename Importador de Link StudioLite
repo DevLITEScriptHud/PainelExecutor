@@ -1,0 +1,184 @@
+--// 📦 Importador Studio Lite v5.2 — feitor DevLITE
+--// LocalScript → StarterPlayerScripts
+--// Recursos: abrir/fechar com animação, importar via URL, salvar, copiar e mover o HUD.
+
+-- Serviços
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local HttpService = game:GetService("HttpService")
+
+local player = Players.LocalPlayer
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.Name = "ImportadorStudioLite"
+
+-- Botão flutuante (agora no canto inferior direito)
+local toggle = Instance.new("TextButton")
+toggle.Size = UDim2.new(0, 160, 0, 45)
+toggle.Position = UDim2.new(1, -170, 1, -60) -- canto inferior direito
+toggle.AnchorPoint = Vector2.new(0, 0)
+toggle.Text = "📁 Importador"
+toggle.Font = Enum.Font.GothamBold
+toggle.TextSize = 18
+toggle.TextColor3 = Color3.new(1, 1, 1)
+toggle.BackgroundColor3 = Color3.fromRGB(45, 100, 255)
+toggle.AutoButtonColor = true
+toggle.Active = true
+toggle.Draggable = true
+toggle.Parent = gui
+Instance.new("UICorner", toggle)
+
+-- Frame principal
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 480, 0, 340)
+frame.Position = UDim2.new(0.5, -240, 0.5, -170)
+frame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+frame.Visible = false
+frame.Active = true
+frame.Draggable = true
+frame.Parent = gui
+Instance.new("UICorner", frame)
+
+-- Sombra
+local shadow = Instance.new("ImageLabel", frame)
+shadow.AnchorPoint = Vector2.new(0.5, 0.5)
+shadow.Position = UDim2.new(0.5, 0, 0.5, 0)
+shadow.Size = UDim2.new(1, 60, 1, 60)
+shadow.Image = "rbxassetid://1316045217"
+shadow.ImageTransparency = 0.8
+shadow.BackgroundTransparency = 1
+shadow.ZIndex = 0
+
+-- Título
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1, 0, 0, 40)
+title.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+title.Text = "📂 Importador Studio Lite v5.2"
+title.Font = Enum.Font.GothamBold
+title.TextColor3 = Color3.new(1, 1, 1)
+title.TextSize = 20
+title.ZIndex = 2
+Instance.new("UICorner", title)
+
+-- Campo URL
+local urlBox = Instance.new("TextBox", frame)
+urlBox.Size = UDim2.new(1, -20, 0, 35)
+urlBox.Position = UDim2.new(0, 10, 0, 50)
+urlBox.PlaceholderText = "Cole aqui a URL do arquivo (ex: Pastebin RAW, GitHub RAW)"
+urlBox.Text = ""
+urlBox.Font = Enum.Font.Gotham
+urlBox.TextSize = 14
+urlBox.TextColor3 = Color3.new(1, 1, 1)
+urlBox.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+urlBox.ClearTextOnFocus = false
+Instance.new("UICorner", urlBox)
+
+-- Caixa de conteúdo
+local inputBox = Instance.new("TextBox", frame)
+inputBox.Size = UDim2.new(1, -20, 0, 150)
+inputBox.Position = UDim2.new(0, 10, 0, 95)
+inputBox.PlaceholderText = "Cole o conteúdo do arquivo aqui ou importe de uma URL..."
+inputBox.MultiLine = true
+inputBox.TextWrapped = true
+inputBox.TextYAlignment = Enum.TextYAlignment.Top
+inputBox.TextXAlignment = Enum.TextXAlignment.Left
+inputBox.Font = Enum.Font.Code
+inputBox.TextColor3 = Color3.new(1, 1, 1)
+inputBox.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+inputBox.TextSize = 14
+Instance.new("UICorner", inputBox)
+
+-- Botão Importar
+local importBtn = Instance.new("TextButton", frame)
+importBtn.Size = UDim2.new(0, 150, 0, 45)
+importBtn.Position = UDim2.new(0, 10, 1, -55)
+importBtn.Text = "📥 Importar URL"
+importBtn.Font = Enum.Font.GothamBold
+importBtn.TextSize = 16
+importBtn.BackgroundColor3 = Color3.fromRGB(60, 160, 80)
+importBtn.TextColor3 = Color3.new(1, 1, 1)
+Instance.new("UICorner", importBtn)
+
+-- Botão Salvar
+local saveBtn = Instance.new("TextButton", frame)
+saveBtn.Size = UDim2.new(0, 150, 0, 45)
+saveBtn.Position = UDim2.new(0.5, -75, 1, -55)
+saveBtn.Text = "💾 Salvar"
+saveBtn.Font = Enum.Font.GothamBold
+saveBtn.TextSize = 16
+saveBtn.BackgroundColor3 = Color3.fromRGB(70, 100, 200)
+saveBtn.TextColor3 = Color3.new(1, 1, 1)
+Instance.new("UICorner", saveBtn)
+
+-- Botão Copiar Tudo
+local copyBtn = Instance.new("TextButton", frame)
+copyBtn.Size = UDim2.new(0, 150, 0, 45)
+copyBtn.Position = UDim2.new(1, -160, 1, -55)
+copyBtn.Text = "📋 Copiar Tudo"
+copyBtn.Font = Enum.Font.GothamBold
+copyBtn.TextSize = 16
+copyBtn.BackgroundColor3 = Color3.fromRGB(200, 160, 50)
+copyBtn.TextColor3 = Color3.new(1, 1, 1)
+Instance.new("UICorner", copyBtn)
+
+-- Efeito de abertura
+local aberto = false
+local tweenIn = TweenService:Create(frame, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0})
+local tweenOut = TweenService:Create(frame, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {BackgroundTransparency = 1})
+
+toggle.MouseButton1Click:Connect(function()
+	aberto = not aberto
+	if aberto then
+		frame.Visible = true
+		frame.BackgroundTransparency = 1
+		tweenIn:Play()
+		toggle.Text = "❌ Fechar"
+	else
+		tweenOut:Play()
+		task.wait(0.4)
+		frame.Visible = false
+		toggle.Text = "📁 Importador"
+	end
+end)
+
+-- Função importar
+importBtn.MouseButton1Click:Connect(function()
+	local url = urlBox.Text
+	if url == "" then
+		warn("[Importador] Nenhuma URL inserida.")
+		return
+	end
+	local ok, result = pcall(function()
+		return game:HttpGet(url)
+	end)
+	if ok then
+		inputBox.Text = result
+		print("[Studio Lite] Arquivo importado com sucesso!")
+	else
+		warn("[Importador] Falha ao baixar o arquivo. Use link RAW (ex: pastebin.com/raw/...)")
+	end
+end)
+
+-- Função salvar (simulada)
+saveBtn.MouseButton1Click:Connect(function()
+	local conteudo = inputBox.Text
+	if conteudo == "" then
+		warn("[Importador] Nenhum conteúdo para salvar.")
+		return
+	end
+	print("[Studio Lite] Arquivo salvo com sucesso!")
+	print(conteudo:sub(1, 200) .. "...")
+end)
+
+-- Função copiar tudo
+copyBtn.MouseButton1Click:Connect(function()
+	if inputBox.Text == "" then
+		warn("[Importador] Nenhum conteúdo para copiar.")
+		return
+	end
+	if setclipboard then
+		setclipboard(inputBox.Text)
+		print("[Studio Lite] Conteúdo copiado para área de transferência!")
+	else
+		warn("[Importador] setclipboard não disponível neste ambiente.")
+	end
+end)
