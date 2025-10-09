@@ -1,0 +1,401 @@
+--// 📦 Importador Studio Lite v4 — DevLITE 
+--// LocalScript → StarterPlayerScripts
+--// Funções: abrir/fechar com animação, importar via URL, colar texto, salvar/baixar conteúdo.
+
+-- Serviços
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local HttpService = game:GetService("HttpService")
+
+local player = Players.LocalPlayer
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.Name = "ImportadorStudioLite"
+
+-- Botão flutuante
+local toggle = Instance.new("TextButton")
+toggle.Size = UDim2.new(0, 140, 0, 45)
+toggle.Position = UDim2.new(0.5, -70, 0.9, 0)
+toggle.Text = "📁 Importador"
+toggle.Font = Enum.Font.GothamBold
+toggle.TextSize = 18
+toggle.TextColor3 = Color3.new(1, 1, 1)
+toggle.BackgroundColor3 = Color3.fromRGB(45, 100, 255)
+toggle.AutoButtonColor = true
+toggle.Parent = gui
+Instance.new("UICorner", toggle)
+
+-- Frame principal
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 480, 0, 320)
+frame.Position = UDim2.new(0.5, -240, 0.5, -160)
+frame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+frame.Visible = false
+frame.Parent = gui
+Instance.new("UICorner", frame)
+
+-- Sombras
+local shadow = Instance.new("ImageLabel", frame)
+shadow.AnchorPoint = Vector2.new(0.5, 0.5)
+shadow.Position = UDim2.new(0.5, 0, 0.5, 0)
+shadow.Size = UDim2.new(1, 60, 1, 60)
+shadow.Image = "rbxassetid://1316045217"
+shadow.ImageTransparency = 0.8
+shadow.BackgroundTransparency = 1
+shadow.ZIndex = 0
+
+-- Título
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1, 0, 0, 40)
+title.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+title.Text = "📂 Importador Studio Lite v4"
+title.Font = Enum.Font.GothamBold
+title.TextColor3 = Color3.new(1, 1, 1)
+title.TextSize = 20
+title.ZIndex = 2
+Instance.new("UICorner", title)
+
+-- Campo URL
+local urlBox = Instance.new("TextBox", frame)
+urlBox.Size = UDim2.new(1, -20, 0, 35)
+urlBox.Position = UDim2.new(0, 10, 0, 50)
+urlBox.PlaceholderText = "Cole aqui a URL do arquivo (ex: Pastebin RAW, GitHub RAW)"
+urlBox.Text = ""
+urlBox.Font = Enum.Font.Gotham
+urlBox.TextSize = 14
+urlBox.TextColor3 = Color3.new(1, 1, 1)
+urlBox.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+urlBox.ClearTextOnFocus = false
+Instance.new("UICorner", urlBox)
+
+-- Caixa de conteúdo (grande)
+local inputBox = Instance.new("TextBox", frame)
+inputBox.Size = UDim2.new(1, -20, 0, 150)
+inputBox.Position = UDim2.new(0, 10, 0, 95)
+inputBox.PlaceholderText = "Cole o conteúdo do arquivo aqui ou importe de uma URL..."
+inputBox.MultiLine = true
+inputBox.TextWrapped = true
+inputBox.TextYAlignment = Enum.TextYAlignment.Top
+inputBox.TextXAlignment = Enum.TextXAlignment.Left
+inputBox.Font = Enum.Font.Code
+inputBox.TextColor3 = Color3.new(1, 1, 1)
+inputBox.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+inputBox.TextSize = 14
+Instance.new("UICorner", inputBox)
+
+-- Botões
+local importBtn = Instance.new("TextButton", frame)
+importBtn.Size = UDim2.new(0, 220, 0, 45)
+importBtn.Position = UDim2.new(0, 10, 1, -55)
+importBtn.Text = "📥 Importar da URL"
+importBtn.Font = Enum.Font.GothamBold
+importBtn.TextSize = 16
+importBtn.BackgroundColor3 = Color3.fromRGB(60, 160, 80)
+importBtn.TextColor3 = Color3.new(1, 1, 1)
+Instance.new("UICorner", importBtn)
+
+local saveBtn = Instance.new("TextButton", frame)
+saveBtn.Size = UDim2.new(0, 220, 0, 45)
+saveBtn.Position = UDim2.new(1, -230, 1, -55)
+saveBtn.Text = "💾 Salvar no Studio"
+saveBtn.Font = Enum.Font.GothamBold
+saveBtn.TextSize = 16
+saveBtn.BackgroundColor3 = Color3.fromRGB(70, 100, 200)
+saveBtn.TextColor3 = Color3.new(1, 1, 1)
+Instance.new("UICorner", saveBtn)
+
+-- Efeito de abertura
+local aberto = false
+local tweenIn = TweenService:Create(frame, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 480, 0, 320), BackgroundTransparency = 0})
+local tweenOut = TweenService:Create(frame, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {BackgroundTransparency = 1})
+
+toggle.MouseButton1Click:Connect(function()
+	aberto = not aberto
+	if aberto then
+		frame.Visible = true
+		frame.BackgroundTransparency = 1
+		tweenIn:Play()
+		toggle.Text = "❌ Fechar"
+	else
+		tweenOut:Play()
+		task.wait(0.4)
+		frame.Visible = false
+		toggle.Text = "📁 Importador"
+	end
+end)
+
+-- Função importar
+importBtn.MouseButton1Click:Connect(function()
+	local url = urlBox.Text
+	if url == "" then
+		warn("[Importador] Nenhuma URL inserida.")
+		return
+	end
+	local ok, result = pcall(function()
+		return game:HttpGet(url)
+	end)
+	if ok then
+		inputBox.Text = result
+		print("[Studio Lite] Arquivo importado com sucesso!")
+	else
+		warn("[Importador] Falha ao baixar o arquivo. Verifique a URL (precisa ser RAW).")
+	end
+end)
+
+-- Função salvar (simula download)
+saveBtn.MouseButton1Click:Connect(function()
+	local conteudo = inputBox.Text
+	if conteudo == "" then
+		warn("[Importador] Nenhum conteúdo para salvar.")
+		return
+	end
+
+	-- Aqui simula o salvamento (pode ser adaptado para enviar a servidor real)
+	print("[Studio Lite] Arquivo salvo com sucesso!")
+	print(conteudo:sub(1, 200) .. "...")
+end)dButton.TextSize = 16
+reloadButton.BorderSizePixel = 0
+Instance.new("UICorner", reloadButton)
+reloadButton.Parent = frame
+
+-- animação de abrir
+local function abrirJanela()
+	clickSound:Play()
+	frame.Visible = true
+	blurFrame.Visible = true
+	frame.Position = UDim2.new(0.5, -190, 1, 20)
+	TweenService:Create(frame, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+		Position = UDim2.new(0.5, -190, 0.5, -190)
+	}):Play()
+end
+
+-- animação de fechar
+local function fecharJanela()
+	clickSound:Play()
+	local tween = TweenService:Create(frame, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {
+		Position = UDim2.new(0.5, -190, 1, 20)
+	})
+	tween:Play()
+	tween.Completed:Connect(function()
+		frame.Visible = false
+		blurFrame.Visible = false
+	end)
+end
+
+-- verificações
+local function verificarArquivo(txt)
+	if txt == "" then
+		return false, "⚠️ Nenhum conteúdo detectado!"
+	end
+	if string.find(txt, "{") and string.find(txt, "}") then
+		return true, "✅ JSON válido!"
+	elseif string.find(txt, "function") or string.find(txt, "return") then
+		return true, "✅ Script Lua compatível!"
+	elseif string.find(txt, "Keyframes") or string.find(txt, "AnimationId") then
+		return true, "✅ Arquivo de animação detectado!"
+	else
+		return false, "❌ Tipo desconhecido!"
+	end
+end
+
+-- conectar botões
+openButton.MouseButton1Click:Connect(abrirJanela)
+closeButton.MouseButton1Click:Connect(fecharJanela)
+
+importButton.MouseButton1Click:Connect(function()
+	clickSound:Play()
+	local ok, msg = verificarArquivo(inputBox.Text)
+	statusLabel.Text = msg
+	statusLabel.TextColor3 = ok and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 50, 50)
+end)
+
+saveButton.MouseButton1Click:Connect(function()
+	clickSound:Play()
+	if inputBox.Text == "" then
+		statusLabel.Text = "⚠️ Nada para salvar!"
+		statusLabel.TextColor3 = Color3.fromRGB(255, 200, 0)
+		return
+	end
+	local module = Instance.new("ModuleScript")
+	module.Name = "Importado_" .. math.random(1000, 9999)
+	module.Source = inputBox.Text
+	module.Parent = game.ReplicatedStorage
+	statusLabel.Text = "💾 Arquivo salvo em ReplicatedStorage!"
+	statusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+end)
+
+reloadButton.MouseButton1Click:Connect(function()
+	clickSound:Play()
+	inputBox.Text = ""
+	statusLabel.Text = "🔄 Pronto para novo arquivo."
+	statusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+end)rSequence.new(color)
+		emitter.Texture = "rbxassetid://241594314" -- círculo partícula
+		emitter.Lifetime = NumberRange.new(2)
+		emitter.Rate = 30
+		emitter.Speed = NumberRange.new(0)
+		emitter.SpreadAngle = Vector2.new(360,360)
+		emitter.Parent = part
+		task.delay(5,function() part:Destroy() end)
+
+		lastSaved = {mode = "Partículas", color = color}
+	end
+end
+
+createButton.MouseButton1Click:Connect(function()
+	createCircle(circleType)
+end)
+
+saveButton.MouseButton1Click:Connect(function()
+	if lastSaved then
+		print("🌀 Forma salva:", lastSaved.mode)
+	else
+		print("Nenhuma forma criada ainda.")
+	end
+end)
+
+loadButton.MouseButton1Click:Connect(function()
+	if lastSaved then
+		createCircle(lastSaved.mode)
+	end
+end)a janela
+        if not Rayfield then
+            Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+        end
+        local Window = Rayfield:CreateWindow({
+            Name = "🔥 Modo Dono",
+            Theme = "Default",
+            LoadingTitle = "Modo Dono",
+            LoadingSubtitle = "Carregando...",
+            KeySystem = false,
+        })
+
+        -- Aba "Main" no Rayfield
+        local mainTab = Window:CreateTab("Main")
+
+        -- Exemplo de botões na aba Main:
+        mainTab:CreateButton({
+            Name = "🪢 JAIL",
+            Callback = function() createMessage("ChatMOON", "Você usou JAIL 🪢") end,
+        })
+
+        mainTab:CreateButton({
+            Name = "🧼 UNJAIL",
+            Callback = function() createMessage("ChatMOON", "Você usou UNJAIL 🧼") end,
+        })
+
+        mainTab:CreateButton({
+            Name = "🥾 KICK",
+            Callback = function() createMessage("ChatMOON", "Você usou KICK 🥾") end,
+        })
+
+        mainTab:CreateButton({
+            Name = "💀 KILL",
+            Callback = function() createMessage("ChatMOON", "Você usou KILL 💀") end,
+        })
+
+        mainTab:CreateButton({
+            Name = "🧊 FREEZE",
+            Callback = function() createMessage("ChatMOON", "Você usou FREEZE 🧊") end,
+        })
+
+        mainTab:CreateButton({
+            Name = "🌫️ UNFREEZE",
+            Callback = function() createMessage("ChatMOON", "Você usou UNFREEZE 🌫️") end,
+        })
+
+        mainTab:CreateButton({
+            Name = "⚡ LAG",
+            Callback = function() createMessage("ChatMOON", "Você usou LAG ⚡") end,
+        })
+
+        mainTab:CreateButton({
+            Name = "😈 ANNOY",
+            Callback = function() createMessage("ChatMOON", "Você usou ANNOY 😈") end,
+        })
+
+        return
+    end
+    local s = gerarScript(msg)
+    if s then
+        createMessage("ChatMOON", "Aqui está seu script:\n" .. s)
+        return
+    end
+    createMessage("ChatMOON", respostas[math.random(1,#respostas)])
+end
+
+local function sendMsg()
+    if inputBox.Text == "" then return end
+    createMessage("Você", inputBox.Text)
+    responder(inputBox.Text)
+    inputBox.Text = ""
+end
+
+sendBtn.MouseButton1Click:Connect(sendMsg)
+inputBox.FocusLost:Connect(function(enter)
+    if enter then sendMsg() end
+end)
+
+-- Toggle chat
+local open = false
+local function toggle(state)
+    open = state
+    if open then
+        root.Visible = true
+        toggleBtn.Text = "Fechar ChatMOON"
+        TweenService:Create(root, TweenInfo.new(0.3), {Position = UDim2.new(0.5, 0, 0.5, 0)}):Play()
+    else
+        toggleBtn.Text = "Abrir ChatMOON"
+        TweenService:Create(root, TweenInfo.new(0.3), {Position = UDim2.new(0.5, 0, 1.5, 0)}):Play()
+        task.delay(0.3, function()
+            root.Visible = false
+        end)
+    end
+end
+toggleBtn.MouseButton1Click:Connect(function()
+    toggle(not open)
+end)
+
+-- Drag do toggleBtn (botão “Abrir ChatMOON”)
+do
+    local draggingBtn = false
+    local dragInputB, mousePosB, btnPos
+
+    toggleBtn.Active = true
+    toggleBtn.Selectable = true
+    toggleBtn.AutoButtonColor = false
+
+    toggleBtn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            draggingBtn = true
+            mousePosB = input.Position
+            btnPos = toggleBtn.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    draggingBtn = false
+                end
+            end)
+        end
+    end)
+
+    toggleBtn.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            dragInputB = input
+        end
+    end)
+
+    UIS.InputChanged:Connect(function(input)
+        if input == dragInputB and draggingBtn then
+            local delta = input.Position - mousePosB
+            toggleBtn.Position = UDim2.new(
+                btnPos.X.Scale,
+                btnPos.X.Offset + delta.X,
+                btnPos.Y.Scale,
+                btnPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+end
+
+-- Mensagem inicial
+task.delay(0.4, function()
+    createMessage("ChatMOON", "Olá! Eu sou a IA local 🌙 — peça um script, por exemplo: 'crie um script de velocidade'")
